@@ -24,7 +24,6 @@ class RsvpModel {
     required this.updatedAt,
   });
 
-  // Get display text for status
   String get statusText {
     switch (status) {
       case RsvpStatus.attending:
@@ -66,7 +65,6 @@ class RsvpModel {
     );
   }
 
-  // Create a copy with updated fields
   RsvpModel copyWith({
     String? id,
     String? eventId,

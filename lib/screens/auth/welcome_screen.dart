@@ -16,7 +16,6 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               const Spacer(),
               
-              // App Logo/Icon
               Container(
                 width: 120,
                 height: 120,
@@ -32,7 +31,6 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               
-              // App Name
               const Text(
                 'EventMate',
                 style: TextStyle(
@@ -43,7 +41,6 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               
-              // Tagline
               Text(
                 'Plan events, invite friends,\ntrack RSVPs effortlessly',
                 textAlign: TextAlign.center,
@@ -55,7 +52,6 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 48),
               
-              // Features
               _buildFeatureItem(
                 Icons.event_available,
                 'Create & manage events',
@@ -73,7 +69,6 @@ class WelcomeScreen extends StatelessWidget {
               
               const Spacer(),
               
-              // Sign Up Button
               SizedBox(
                 width: double.infinity,
                 child: CustomButton(
@@ -90,7 +85,6 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               
-              // Login Button
               SizedBox(
                 width: double.infinity,
                 child: CustomButton(

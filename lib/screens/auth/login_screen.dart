@@ -49,13 +49,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulate API call
       await Future.delayed(const Duration(seconds: 1));
 
       setState(() => _isLoading = false);
 
       if (mounted) {
-        // Navigate to home screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -86,7 +84,6 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 24),
                 
-                // Welcome text
                 const Text(
                   'Welcome back!',
                   style: TextStyle(
@@ -105,7 +102,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 48),
                 
-                // Email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -119,7 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
@@ -146,7 +141,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
                 
-                // Forgot password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -158,7 +152,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 
-                // Login button
                 CustomButton(
                   text: 'Login',
                   onPressed: _handleLogin,
@@ -166,7 +159,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 
-                // Demo credentials hint
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(

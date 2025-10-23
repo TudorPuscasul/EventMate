@@ -101,7 +101,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Event header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -131,7 +130,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               ),
             ),
 
-            // Date and time
             _buildInfoSection(
               icon: Icons.calendar_today,
               title: 'Date & Time',
@@ -140,7 +138,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
             const Divider(height: 1),
 
-            // Location
             _buildInfoSection(
               icon: Icons.location_on,
               title: 'Location',
@@ -149,7 +146,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
             const Divider(height: 1),
 
-            // Description
             _buildInfoSection(
               icon: Icons.description,
               title: 'Description',
@@ -158,7 +154,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
             const Divider(height: 1, thickness: 8),
 
-            // RSVP Summary
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -179,7 +174,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
             const Divider(height: 1),
 
-            // Attendees list
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -409,8 +403,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to list
+              Navigator.pop(context);
+              Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Event deleted successfully'),

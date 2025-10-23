@@ -32,11 +32,9 @@ class EventCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Title and date
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Event icon
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -50,7 +48,6 @@ class EventCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Title and creator
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +73,6 @@ class EventCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Past event indicator
                   if (event.isPast)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -100,7 +96,6 @@ class EventCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               
-              // Date and time
               Row(
                 children: [
                   Icon(
@@ -121,7 +116,6 @@ class EventCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               
-              // Location
               Row(
                 children: [
                   Icon(
@@ -145,7 +139,6 @@ class EventCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               
-              // RSVP counts and user's status
               Row(
                 children: [
                   Expanded(

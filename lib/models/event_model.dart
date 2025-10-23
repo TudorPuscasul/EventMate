@@ -21,10 +21,8 @@ class EventModel {
     required this.createdAt,
   });
 
-  // Check if event is in the past
   bool get isPast => dateTime.isBefore(DateTime.now());
 
-  // Get formatted date string
   String get formattedDate {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -83,7 +81,6 @@ class EventModel {
     );
   }
 
-  // Create a copy with updated fields
   EventModel copyWith({
     String? id,
     String? title,

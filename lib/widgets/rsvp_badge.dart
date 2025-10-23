@@ -89,7 +89,6 @@ class RsvpBadge extends StatelessWidget {
   }
 }
 
-// RSVP Count Widget for displaying counts
 class RsvpCountWidget extends StatelessWidget {
   final Map<RsvpStatus, int> counts;
 

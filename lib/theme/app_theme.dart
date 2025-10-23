@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Color palette - Updated based on provided image
-  static const Color primaryColor = Color(0xFF1E3A2E); // Dark forest green
-  static const Color secondaryColor = Color(0xFF3D6854); // Medium forest green
-  static const Color tertiaryColor = Color(0xFF5A967D); // Light teal green
-  static const Color accentColor = Color(0xFF7EC4A6); // Mint green
+  static const Color primaryColor = Color(0xFF1E3A2E);
+  static const Color secondaryColor = Color(0xFF3D6854);
+  static const Color tertiaryColor = Color(0xFF5A967D);
+  static const Color accentColor = Color(0xFF7EC4A6);
   static const Color errorColor = Color(0xFFE53935);
   static const Color backgroundColor = Color.fromARGB(255, 255, 255, 255);
   static const Color cardColor = Color.fromARGB(255, 255, 254, 254);
   static const Color textPrimary = Color(0xFF1E3A2E);
   static const Color textSecondary = Color(0xFF636E72);
   
-  // RSVP Status Colors
-  static const Color attendingColor = Color(0xFF5A967D); // Using palette green
+  static const Color attendingColor = Color(0xFF5A967D);
   static const Color declinedColor = Color(0xFFE53935);
   static const Color maybeColor = Color(0xFFFF9800);
   static const Color pendingColor = Color(0xFF9E9E9E);
@@ -30,7 +28,6 @@ class AppTheme {
       error: errorColor,
     ),
     
-    // AppBar Theme
     appBarTheme: const AppBarTheme(
       centerTitle: true,
       elevation: 0,
@@ -43,7 +40,6 @@ class AppTheme {
       ),
     ),
     
-    // Card Theme - Fixed type error
     cardTheme: CardThemeData(
       color: cardColor,
       elevation: 2,
@@ -53,7 +49,6 @@ class AppTheme {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
     
-    // Input Decoration Theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
@@ -76,7 +71,6 @@ class AppTheme {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
     
-    // Elevated Button Theme
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
@@ -93,7 +87,6 @@ class AppTheme {
       ),
     ),
     
-    // Text Button Theme
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: primaryColor,
@@ -104,7 +97,6 @@ class AppTheme {
       ),
     ),
     
-    // Floating Action Button Theme
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: primaryColor,
       foregroundColor: Colors.white,

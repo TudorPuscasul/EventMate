@@ -69,7 +69,6 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context) => const CreateEventScreen(),
             ),
           ).then((_) {
-            // Refresh the list when returning from create event screen
             setState(() {});
           });
         },
@@ -147,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // Navigate back to welcome screen (logout)
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/',

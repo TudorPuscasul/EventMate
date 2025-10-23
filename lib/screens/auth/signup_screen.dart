@@ -73,13 +73,11 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulate API call
       await Future.delayed(const Duration(seconds: 1));
 
       setState(() => _isLoading = false);
 
       if (mounted) {
-        // Navigate to home screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -110,7 +108,6 @@ class _SignupScreenState extends State<SignupScreen> {
               children: [
                 const SizedBox(height: 24),
                 
-                // Welcome text
                 const Text(
                   'Create Account',
                   style: TextStyle(
@@ -129,7 +126,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 48),
                 
-                // Name field
                 TextFormField(
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
@@ -143,7 +139,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -157,7 +152,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
@@ -183,7 +177,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Confirm password field
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmPasswordVisible,
@@ -210,7 +203,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 32),
                 
-                // Sign up button
                 CustomButton(
                   text: 'Sign Up',
                   onPressed: _handleSignup,
@@ -218,7 +210,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Terms and privacy
                 Text(
                   'By signing up, you agree to our Terms of Service and Privacy Policy',
                   textAlign: TextAlign.center,

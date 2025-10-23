@@ -3,7 +3,6 @@ import '../models/event_model.dart';
 import '../models/rsvp_model.dart';
 
 class MockData {
-  // Current logged-in user
   static final UserModel currentUser = UserModel(
     id: 'user1',
     name: 'test',

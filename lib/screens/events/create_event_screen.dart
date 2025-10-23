@@ -101,7 +101,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
     setState(() => _isLoading = true);
 
-    // Simulate API call
     await Future.delayed(const Duration(seconds: 1));
 
     setState(() => _isLoading = false);
@@ -131,7 +130,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Title field
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
@@ -191,7 +189,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Location field
               TextFormField(
                 controller: _locationController,
                 decoration: const InputDecoration(
@@ -205,7 +202,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Description field
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
@@ -221,7 +217,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Info card
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -247,7 +242,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Create button
               CustomButton(
                 text: 'Create Event',
                 onPressed: _handleCreateEvent,
@@ -256,7 +250,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Cancel button
               CustomButton(
                 text: 'Cancel',
                 onPressed: () => Navigator.pop(context),
