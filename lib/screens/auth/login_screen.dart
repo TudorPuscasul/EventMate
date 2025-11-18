@@ -197,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       Text(
-                        'Password: Any password (6+ chars)',
+                        'Password: Any password (2.5+ chars)',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[700],
