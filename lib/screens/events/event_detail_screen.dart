@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/event_model.dart';
 import '../../models/rsvp_model.dart';
-import '../../utils/mock_data.dart';
+import '../../services/rsvp_service.dart';
+import '../../services/event_service.dart';
 import '../../widgets/rsvp_badge.dart';
 import '../../theme/app_theme.dart';
 
@@ -18,52 +20,94 @@ class EventDetailScreen extends StatefulWidget {
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
-  late List<RsvpModel> _rsvps;
-  late RsvpModel? _currentUserRsvp;
-  final bool _isCreator = MockData.currentUser.id == MockData.events.first.creatorId;
+  final RsvpService _rsvpService = RsvpService();
+  final EventService _eventService = EventService();
+  RsvpModel? _currentUserRsvp;
+  Map<RsvpStatus, int> _rsvpCounts = {
+    RsvpStatus.attending: 0,
+    RsvpStatus.maybe: 0,
+    RsvpStatus.declined: 0,
+    RsvpStatus.pending: 0,
+  };
+  bool _isLoading = true;
+
+  String? get _currentUserEmail => FirebaseAuth.instance.currentUser?.email;
+  String? get _currentUserId => FirebaseAuth.instance.currentUser?.uid;
+  bool get _isCreator => widget.event.creatorId == _currentUserId;
+  bool get _isInvited => widget.event.invitedUserIds.contains(_currentUserEmail);
 
   @override
   void initState() {
     super.initState();
-    _loadRsvps();
+    _loadData();
   }
 
-  void _loadRsvps() {
-    _rsvps = MockData.getRsvpsForEvent(widget.event.id);
-    _currentUserRsvp = MockData.getUserRsvpForEvent(
-      widget.event.id,
-      MockData.currentUser.id,
-    );
+  Future<void> _loadData() async {
+    final rsvp = await _rsvpService.getUserRsvpForEvent(widget.event.id);
+    final counts = await _rsvpService.getRsvpCounts(widget.event.id);
+
+    if (mounted) {
+      setState(() {
+        _currentUserRsvp = rsvp;
+        _rsvpCounts = {
+          RsvpStatus.attending: counts['attending'] ?? 0,
+          RsvpStatus.maybe: counts['maybe'] ?? 0,
+          RsvpStatus.declined: counts['declined'] ?? 0,
+          RsvpStatus.pending: counts['pending'] ?? 0,
+        };
+        _isLoading = false;
+      });
+    }
   }
 
-  void _updateRsvpStatus(RsvpStatus newStatus) {
-    setState(() {
-      if (_currentUserRsvp != null) {
-        _currentUserRsvp = _currentUserRsvp!.copyWith(
-          status: newStatus,
-          updatedAt: DateTime.now(),
-        );
-      }
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('RSVP updated to ${newStatus.name}'),
-        behavior: SnackBarBehavior.floating,
-      ),
+  Future<void> _updateRsvpStatus(RsvpStatus newStatus) async {
+    final error = await _rsvpService.updateRsvpStatus(
+      eventId: widget.event.id,
+      status: newStatus,
     );
+
+    if (!mounted) return;
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      // Reload data to get updated RSVP
+      await _loadData();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('RSVP updated to ${newStatus.name}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isCreator = widget.event.creatorId == MockData.currentUser.id;
-    final rsvpCounts = MockData.getRsvpCounts(widget.event.id);
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Event Details')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Event Details'),
         actions: [
-          if (isCreator)
+          if (_isCreator) ...[
+            IconButton(
+              icon: const Icon(Icons.person_add),
+              onPressed: _showInviteDialog,
+              tooltip: 'Invite User',
+            ),
             PopupMenuButton<String>(
               onSelected: (value) {
                 if (value == 'edit') {
@@ -95,6 +139,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
               ],
             ),
+          ],
         ],
       ),
       body: SingleChildScrollView(
@@ -120,7 +165,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    isCreator ? 'Created by you' : 'By ${widget.event.creatorName}',
+                    _isCreator ? 'Created by you' : 'By ${widget.event.creatorName}',
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.white70,
@@ -167,34 +212,75 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  RsvpCountWidget(counts: rsvpCounts),
+                  RsvpCountWidget(counts: _rsvpCounts),
+                  if (_isCreator) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _showInviteDialog,
+                        icon: const Icon(Icons.person_add),
+                        label: const Text('Invite Someone'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
 
             const Divider(height: 1),
 
+            // Invited users section
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Attendees (${_rsvps.length})',
+                    'Invited (${widget.event.invitedUserIds.length})',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  ..._rsvps.map((rsvp) => _buildAttendeeItem(rsvp)),
+                  if (widget.event.invitedUserIds.isEmpty)
+                    Text(
+                      'No one invited yet',
+                      style: TextStyle(color: Colors.grey[600]),
+                    )
+                  else
+                    ...widget.event.invitedUserIds.map((email) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                            child: Text(
+                              email[0].toUpperCase(),
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(email)),
+                        ],
+                      ),
+                    )),
                 ],
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: !isCreator && _currentUserRsvp != null
+      // Show RSVP buttons for invited users (not creator)
+      bottomNavigationBar: !_isCreator && _isInvited
           ? _buildRsvpButtons()
           : null,
     );
@@ -374,12 +460,67 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
+  void _showInviteDialog() {
+    final emailController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Invite User'),
+        content: TextField(
+          controller: emailController,
+          decoration: const InputDecoration(
+            labelText: 'Email',
+            hintText: 'Enter user email',
+          ),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isEmpty) return;
+
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              Navigator.pop(context);
+
+              final error = await _rsvpService.inviteUserByEmail(
+                eventId: widget.event.id,
+                email: email,
+              );
+
+              if (!mounted) return;
+
+              if (error == null) {
+                // Reload data to show updated invited list
+                await _loadData();
+              }
+
+              scaffoldMessenger.showSnackBar(
+                SnackBar(
+                  content: Text(error ?? 'Invitation sent to $email'),
+                  backgroundColor: error == null ? Colors.green : Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: const Text('Invite'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showEditDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Event'),
-        content: const Text('Event editing will be implemented in Milestone 2 with Firebase integration.'),
+        content: const Text('Event editing coming soon!'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -402,15 +543,30 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Event deleted successfully'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+
+              final error = await _eventService.deleteEvent(widget.event.id);
+
+              if (!mounted) return;
+
+              if (error != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(error),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } else {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Event deleted successfully'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),

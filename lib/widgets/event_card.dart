@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/event_model.dart';
 import '../models/rsvp_model.dart';
-import '../utils/mock_data.dart';
+import '../services/rsvp_service.dart';
 import 'rsvp_badge.dart';
 
-class EventCard extends StatelessWidget {
+class EventCard extends StatefulWidget {
   final EventModel event;
   final VoidCallback onTap;
 
@@ -15,17 +16,46 @@ class EventCard extends StatelessWidget {
   });
 
   @override
+  State<EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<EventCard> {
+  final RsvpService _rsvpService = RsvpService();
+  Map<RsvpStatus, int> _rsvpCounts = {
+    RsvpStatus.attending: 0,
+    RsvpStatus.maybe: 0,
+    RsvpStatus.declined: 0,
+    RsvpStatus.pending: 0,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRsvpCounts();
+  }
+
+  Future<void> _loadRsvpCounts() async {
+    final counts = await _rsvpService.getRsvpCounts(widget.event.id);
+    if (mounted) {
+      setState(() {
+        _rsvpCounts = {
+          RsvpStatus.attending: counts['attending'] ?? 0,
+          RsvpStatus.maybe: counts['maybe'] ?? 0,
+          RsvpStatus.declined: counts['declined'] ?? 0,
+          RsvpStatus.pending: counts['pending'] ?? 0,
+        };
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final rsvpCounts = MockData.getRsvpCounts(event.id);
-    final currentUserRsvp = MockData.getUserRsvpForEvent(
-      event.id,
-      MockData.currentUser.id,
-    );
-    final isCreator = event.creatorId == MockData.currentUser.id;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final isCreator = widget.event.creatorId == currentUserId;
 
     return Card(
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -53,7 +83,7 @@ class EventCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          event.title,
+                          widget.event.title,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -64,7 +94,7 @@ class EventCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          isCreator ? 'Created by you' : 'By ${event.creatorName}',
+                          isCreator ? 'Created by you' : 'By ${widget.event.creatorName}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -73,7 +103,7 @@ class EventCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (event.isPast)
+                  if (widget.event.isPast)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -105,7 +135,7 @@ class EventCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${event.formattedDate} at ${event.formattedTime}',
+                    '${widget.event.formattedDate} at ${widget.event.formattedTime}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[700],
@@ -126,7 +156,7 @@ class EventCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      event.location,
+                      widget.event.location,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[700],
@@ -139,18 +169,7 @@ class EventCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               
-              Row(
-                children: [
-                  Expanded(
-                    child: RsvpCountWidget(counts: rsvpCounts),
-                  ),
-                  if (currentUserRsvp != null && !isCreator)
-                    RsvpBadge(
-                      status: currentUserRsvp.status,
-                      isSmall: true,
-                    ),
-                ],
-              ),
+              RsvpCountWidget(counts: _rsvpCounts),
             ],
           ),
         ),
