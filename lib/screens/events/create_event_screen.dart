@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/custom_button.dart';
 import '../../utils/constants.dart';
+import '../../services/event_service.dart';
 
 class CreateEventScreen extends StatefulWidget {
   const CreateEventScreen({super.key});
@@ -101,11 +102,37 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
     setState(() => _isLoading = true);
 
-    await Future.delayed(const Duration(seconds: 1));
+    // Combine date and time
+    final dateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
+
+    // Create event in Firestore
+    final eventService = EventService();
+    final error = await eventService.createEvent(
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      dateTime: dateTime,
+      location: _locationController.text.trim(),
+    );
+
+    if (!mounted) return;
 
     setState(() => _isLoading = false);
 
-    if (mounted) {
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Event created successfully!'),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../widgets/custom_button.dart';
 import '../../utils/constants.dart';
 import '../home/home_screen.dart';
+import 'package:provider/provider.dart';
+import '../../services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -70,23 +72,33 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _handleSignup() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+  if (_formKey.currentState!.validate()) {
+    setState(() => _isLoading = true);
 
-      await Future.delayed(const Duration(seconds: 1));
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final error = await authService.signUp(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      name: _nameController.text.trim(),
+    );
 
-      setState(() => _isLoading = false);
+    if (!mounted) return;
 
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
-        );
-      }
+    setState(() => _isLoading = false);
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else {
+      // Success - go back so AuthWrapper can show HomeScreen
+      Navigator.pop(context);
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "199722517904",
+    "project_id": "eventmate-e729a",
+    "storage_bucket": "eventmate-e729a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199722517904:android:4508da270da4a719ca1f15",
+        "android_client_info": {
+          "package_name": "com.example.eventmate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARkq1CrQxV80I2BvzXHzFpeC3ZZngsqoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

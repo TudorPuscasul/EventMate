@@ -3,6 +3,8 @@ import '../../widgets/custom_button.dart';
 import '../../utils/constants.dart';
 import '../../utils/mock_data.dart';
 import '../home/home_screen.dart';
+import 'package:provider/provider.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,24 +47,34 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+Future<void> _handleLogin() async {
+  if (_formKey.currentState!.validate()) {
+    setState(() => _isLoading = true);
 
-      await Future.delayed(const Duration(seconds: 1));
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final error = await authService.signIn(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
 
-      setState(() => _isLoading = false);
+    if (!mounted) return;
 
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
-        );
-      }
+    setState(() => _isLoading = false);
+
+    if (error != null) {
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else {
+      // Success - go back so AuthWrapper can show HomeScreen
+      Navigator.pop(context);
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -214,30 +226,20 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _showForgotPasswordDialog() {
-    final emailController = TextEditingController();
+  Future<void> _showForgotPasswordDialog() async {
+  final TextEditingController emailController = TextEditingController();
     
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Reset Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Enter your email address and we\'ll send you a password reset link.',
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'Enter your email',
-                prefixIcon: Icon(Icons.email_outlined),
-              ),
-            ),
-          ],
+        content: TextField(
+          controller: emailController,
+          decoration: const InputDecoration(
+            labelText: 'Email',
+            hintText: 'Enter your email',
+          ),
+          keyboardType: TextInputType.emailAddress,
         ),
         actions: [
           TextButton(
@@ -245,16 +247,27 @@ class _LoginScreenState extends State<LoginScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isEmpty) return;
+              
               Navigator.pop(context);
+              
+              final authService = Provider.of<AuthService>(context, listen: false);
+              final error = await authService.sendPasswordResetEmail(email);
+              
+              if (!mounted) return;
+              
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Password reset link sent to your email!'),
-                  behavior: SnackBarBehavior.floating,
+                SnackBar(
+                  content: Text(
+                    error ?? 'Password reset email sent! Check your inbox.',
+                  ),
+                  backgroundColor: error == null ? Colors.green : Colors.red,
                 ),
               );
             },
-            child: const Text('Send Link'),
+            child: const Text('Send'),
           ),
         ],
       ),

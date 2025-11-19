@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../utils/mock_data.dart';
 import '../events/event_list_screen.dart';
 import '../events/create_event_screen.dart';
+import 'package:provider/provider.dart';
+import '../../services/auth_service.dart';
+import '../../services/event_service.dart';
+import '../../models/event_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,19 +15,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    EventListScreen(
-      events: MockData.getEventsCreatedByUser(MockData.currentUser.id),
-      title: 'My Events',
-      emptyMessage: 'You haven\'t created any events yet',
-    ),
-    EventListScreen(
-      events: MockData.getEventsUserInvitedTo(MockData.currentUser.id),
-      title: 'Invitations',
-      emptyMessage: 'You don\'t have any invitations',
-    ),
-  ];
+  final EventService _eventService = EventService();
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: _screens[_currentIndex],
+      body: _currentIndex == 0
+          ? _buildMyEventsTab()
+          : _buildInvitationsTab(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -68,9 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(
               builder: (context) => const CreateEventScreen(),
             ),
-          ).then((_) {
-            setState(() {});
-          });
+          );
         },
         icon: const Icon(Icons.add),
         label: const Text('Create Event'),
@@ -78,7 +69,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildMyEventsTab() {
+    return StreamBuilder<List<EventModel>>(
+      stream: _eventService.getMyEvents(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final events = snapshot.data ?? [];
+        return EventListScreen(
+          events: events,
+          title: 'My Events',
+          emptyMessage: 'You haven\'t created any events yet',
+        );
+      },
+    );
+  }
+
+  Widget _buildInvitationsTab() {
+    return StreamBuilder<List<EventModel>>(
+      stream: _eventService.getInvitedEvents(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final events = snapshot.data ?? [];
+        return EventListScreen(
+          events: events,
+          title: 'Invitations',
+          emptyMessage: 'You don\'t have any invitations',
+        );
+      },
+    );
+  }
+
   void _showProfileDialog() {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = authService.currentUser;
+    final userName = user?.displayName ?? 'User';
+    final userEmail = user?.email ?? '';
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -91,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
               radius: 40,
               backgroundColor: Theme.of(context).primaryColor,
               child: Text(
-                MockData.currentUser.name[0].toUpperCase(),
+                userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
                 style: const TextStyle(
                   fontSize: 32,
                   color: Colors.white,
@@ -101,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              MockData.currentUser.name,
+              userName,
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -109,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              MockData.currentUser.email,
+              userEmail,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -117,51 +149,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 24),
             ListTile(
-              leading: const Icon(Icons.event),
-              title: const Text('Events Created'),
-              trailing: Text(
-                '${MockData.getEventsCreatedByUser(MockData.currentUser.id).length}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
               contentPadding: EdgeInsets.zero,
-            ),
-            ListTile(
-              leading: const Icon(Icons.mail),
-              title: const Text('Invitations'),
-              trailing: Text(
-                '${MockData.getEventsUserInvitedTo(MockData.currentUser.id).length}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              contentPadding: EdgeInsets.zero,
+              onTap: () async {
+                Navigator.pop(context); // Close dialog
+                await authService.signOut();
+                // Navigation handled by AuthWrapper
+              },
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/',
-                (route) => false,
-              );
-            },
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }

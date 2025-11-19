@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/auth/welcome_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+import 'firebase_options.dart';
+import 'screens/auth/auth_wrapper.dart';
+import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -21,7 +29,7 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  
+
   runApp(const EventMateApp());
 }
 
@@ -30,19 +38,16 @@ class EventMateApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-
-      title: 'EventMate',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      
-      // Dark theme (optional - currently same as light)
-      // darkTheme: AppTheme.darkTheme,
-      // themeMode: ThemeMode.system,
-      home: const WelcomeScreen(),
-      // useMaterial3: true,
-      
-
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+      ],
+      child: MaterialApp(
+        title: 'EventMate',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: const AuthWrapper(),
+      ),
     );
   }
 }
