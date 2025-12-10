@@ -11,15 +11,16 @@ class EventService {
   String? get currentUserName => _auth.currentUser?.displayName;
 
   // Create a new event
-  Future<String?> createEvent({
+  Future<Map<String, dynamic>> createEvent({
     required String title,
     required String description,
     required DateTime dateTime,
     required String location,
+    required bool isOnline,
   }) async {
     try {
       if (currentUserId == null) {
-        return 'User not logged in';
+        return {'error': 'User not logged in', 'isOffline': false};
       }
 
       final docRef = await _firestore.collection('events').add({
@@ -33,16 +34,30 @@ class EventService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // Update the document with its own ID
       await docRef.update({'id': docRef.id});
 
-      return null; // Success
+      return {
+        'error': null,
+        'message': isOnline
+            ? 'Event created successfully'
+            : 'Event saved locally, will sync when online',
+        'isOffline': !isOnline
+      };
+    } on FirebaseException catch (e) {
+      // Check if it's a network error
+      if (e.code == 'unavailable' || e.message?.contains('network') == true) {
+        return {
+          'error': null,
+          'message': 'Event saved locally, will sync when online',
+          'isOffline': true
+        };
+      }
+      return {'error': 'Failed to create event: ${e.message}', 'isOffline': false};
     } catch (e) {
-      return 'Failed to create event: $e';
+      return {'error': 'Failed to create event: $e', 'isOffline': false};
     }
   }
 
-  // Get events created by current user
   Stream<List<EventModel>> getMyEvents() {
     if (currentUserId == null) {
       return Stream.value([]);
@@ -56,13 +71,11 @@ class EventService {
           final events = snapshot.docs
               .map((doc) => _eventFromFirestore(doc))
               .toList();
-          // Sort locally by dateTime
           events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
           return events;
         });
   }
 
-  // Get events where current user is invited (by email)
   Stream<List<EventModel>> getInvitedEvents() {
     final userEmail = _auth.currentUser?.email;
     if (userEmail == null) {
@@ -77,13 +90,11 @@ class EventService {
           final events = snapshot.docs
               .map((doc) => _eventFromFirestore(doc))
               .toList();
-          // Sort locally by dateTime
           events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
           return events;
         });
   }
 
-  // Get a single event by ID
   Future<EventModel?> getEvent(String eventId) async {
     try {
       final doc = await _firestore.collection('events').doc(eventId).get();
@@ -96,8 +107,7 @@ class EventService {
     }
   }
 
-  // Update an event
-  Future<String?> updateEvent(EventModel event) async {
+  Future<Map<String, dynamic>> updateEvent(EventModel event, bool isOnline) async {
     try {
       await _firestore.collection('events').doc(event.id).update({
         'title': event.title,
@@ -106,23 +116,51 @@ class EventService {
         'location': event.location,
         'invitedUserIds': event.invitedUserIds,
       });
-      return null; // Success
+      return {
+        'error': null,
+        'message': isOnline
+            ? 'Event updated successfully'
+            : 'Update saved locally, will sync when online',
+        'isOffline': !isOnline
+      };
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable' || e.message?.contains('network') == true) {
+        return {
+          'error': null,
+          'message': 'Update saved locally, will sync when online',
+          'isOffline': true
+        };
+      }
+      return {'error': 'Failed to update event: ${e.message}', 'isOffline': false};
     } catch (e) {
-      return 'Failed to update event: $e';
+      return {'error': 'Failed to update event: $e', 'isOffline': false};
     }
   }
 
-  // Delete an event
-  Future<String?> deleteEvent(String eventId) async {
+  Future<Map<String, dynamic>> deleteEvent(String eventId, bool isOnline) async {
     try {
       await _firestore.collection('events').doc(eventId).delete();
-      return null; // Success
+      return {
+        'error': null,
+        'message': isOnline
+            ? 'Event deleted successfully'
+            : 'Delete queued, will sync when online',
+        'isOffline': !isOnline
+      };
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable' || e.message?.contains('network') == true) {
+        return {
+          'error': null,
+          'message': 'Delete queued, will sync when online',
+          'isOffline': true
+        };
+      }
+      return {'error': 'Failed to delete event: ${e.message}', 'isOffline': false};
     } catch (e) {
-      return 'Failed to delete event: $e';
+      return {'error': 'Failed to delete event: $e', 'isOffline': false};
     }
   }
 
-  // Helper to convert Firestore document to EventModel
   EventModel _eventFromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 

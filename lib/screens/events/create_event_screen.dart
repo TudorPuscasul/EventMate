@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../utils/constants.dart';
 import '../../services/event_service.dart';
+import '../../services/connectivity_service.dart';
 
 class CreateEventScreen extends StatefulWidget {
   const CreateEventScreen({super.key});
@@ -113,14 +115,22 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
     // Create event in Firestore
     final eventService = EventService();
-    final error = await eventService.createEvent(
+    final connectivityService = Provider.of<ConnectivityService>(context, listen: false);
+    final isOnline = connectivityService.isOnline;
+
+    final result = await eventService.createEvent(
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       dateTime: dateTime,
       location: _locationController.text.trim(),
+      isOnline: isOnline,
     );
 
     if (!mounted) return;
+
+    final error = result['error'];
+    final message = result['message'];
+    final isOffline = result['isOffline'] ?? false;
 
     setState(() => _isLoading = false);
 
@@ -133,14 +143,22 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Event created successfully!'),
+      final navigator = Navigator.of(context);
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(message ?? 'Event created successfully!'),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.green,
+          backgroundColor: isOffline ? Colors.orange : Colors.green,
         ),
       );
-      Navigator.pop(context);
+
+      // Small delay to ensure UI updates before popping
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (mounted) {
+        navigator.pop();
+      }
     }
   }
 

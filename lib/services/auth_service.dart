@@ -2,18 +2,18 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
+import 'profile_cache_service.dart';
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ProfileCacheService _cacheService = ProfileCacheService();
 
   User? get currentUser => _auth.currentUser;
   bool get isAuthenticated => currentUser != null;
 
-  // Stream of auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Sign up with email and password
   Future<String?> signUp({
     required String email,
     required String password,
@@ -25,10 +25,8 @@ class AuthService extends ChangeNotifier {
         password: password,
       );
 
-      // Update display name
       await result.user!.updateDisplayName(name);
 
-      // TODO: Add Firestore user document when Firestore is set up
       await _firestore.collection('users').doc(result.user!.uid).set({
         'id': result.user!.uid,
         'name': name,
@@ -37,8 +35,15 @@ class AuthService extends ChangeNotifier {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+      // Cache profile data for offline use
+      await _cacheService.cacheProfile(
+        displayName: name,
+        email: email,
+        userId: result.user!.uid,
+      );
+
       notifyListeners();
-      return null; // Success
+      return null;
     } on FirebaseAuthException catch (e) {
       return _handleAuthError(e);
     } catch (e) {
@@ -46,18 +51,25 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // Sign in with email and password
   Future<String?> signIn({
     required String email,
     required String password,
   }) async {
     try {
-      await _auth.signInWithEmailAndPassword(
+      final result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Cache profile data for offline use
+      await _cacheService.cacheProfile(
+        displayName: result.user?.displayName,
+        email: result.user?.email,
+        userId: result.user?.uid,
+      );
+
       notifyListeners();
-      return null; // Success
+      return null;
     } on FirebaseAuthException catch (e) {
       return _handleAuthError(e);
     } catch (e) {
@@ -65,13 +77,12 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // Sign out
   Future<void> signOut() async {
     await _auth.signOut();
+    await _cacheService.clearCache();
     notifyListeners();
   }
 
-  // Get current user data from Firestore
   Future<UserModel?> getCurrentUserData() async {
     if (currentUser == null) return null;
     
@@ -86,17 +97,15 @@ class AuthService extends ChangeNotifier {
     return null;
   }
 
-  // Password reset
   Future<String?> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      return null; // Success
+      return null;
     } on FirebaseAuthException catch (e) {
       return _handleAuthError(e);
     }
   }
 
-  // Error handling
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':

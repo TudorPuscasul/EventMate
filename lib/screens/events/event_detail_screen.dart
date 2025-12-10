@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../../models/event_model.dart';
 import '../../models/rsvp_model.dart';
 import '../../services/rsvp_service.dart';
 import '../../services/event_service.dart';
+import '../../services/connectivity_service.dart';
 import '../../widgets/rsvp_badge.dart';
+import '../../widgets/sync_status_widget.dart';
 import '../../theme/app_theme.dart';
 
 class EventDetailScreen extends StatefulWidget {
@@ -61,12 +64,20 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _updateRsvpStatus(RsvpStatus newStatus) async {
-    final error = await _rsvpService.updateRsvpStatus(
+    final connectivityService = Provider.of<ConnectivityService>(context, listen: false);
+    final isOnline = connectivityService.isOnline;
+
+    final result = await _rsvpService.updateRsvpStatus(
       eventId: widget.event.id,
       status: newStatus,
+      isOnline: isOnline,
     );
 
     if (!mounted) return;
+
+    final error = result['error'];
+    final message = result['message'];
+    final isOffline = result['isOffline'] ?? false;
 
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -82,8 +93,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('RSVP updated to ${newStatus.name}'),
+          content: Text(message ?? 'RSVP updated'),
           behavior: SnackBarBehavior.floating,
+          backgroundColor: isOffline ? Colors.orange : Colors.green,
         ),
       );
     }
@@ -155,13 +167,23 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.event.title,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.event.title,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      SyncStatusWidget(
+                        status: widget.event.syncStatus,
+                        isSmall: false,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -486,14 +508,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               if (email.isEmpty) return;
 
               final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final connectivityService = Provider.of<ConnectivityService>(context, listen: false);
+              final isOnline = connectivityService.isOnline;
               Navigator.pop(context);
 
-              final error = await _rsvpService.inviteUserByEmail(
+              final result = await _rsvpService.inviteUserByEmail(
                 eventId: widget.event.id,
                 email: email,
+                isOnline: isOnline,
               );
 
               if (!mounted) return;
+
+              final error = result['error'];
+              final message = result['message'];
+              final isOffline = result['isOffline'] ?? false;
 
               if (error == null) {
                 // Reload data to show updated invited list
@@ -502,8 +531,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
               scaffoldMessenger.showSnackBar(
                 SnackBar(
-                  content: Text(error ?? 'Invitation sent to $email'),
-                  backgroundColor: error == null ? Colors.green : Colors.red,
+                  content: Text(message ?? error ?? 'Invitation sent'),
+                  backgroundColor: error != null ? Colors.red : (isOffline ? Colors.orange : Colors.green),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -544,14 +573,23 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              final connectivityService = Provider.of<ConnectivityService>(context, listen: false);
+              final isOnline = connectivityService.isOnline;
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context);
 
-              final error = await _eventService.deleteEvent(widget.event.id);
+              navigator.pop(); // Close dialog
+
+              final result = await _eventService.deleteEvent(widget.event.id, isOnline);
 
               if (!mounted) return;
 
+              final error = result['error'];
+              final message = result['message'];
+              final isOffline = result['isOffline'] ?? false;
+
               if (error != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   SnackBar(
                     content: Text(error),
                     backgroundColor: Colors.red,
@@ -559,11 +597,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                 );
               } else {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Event deleted successfully'),
+                navigator.pop(); // Go back to home
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text(message ?? 'Event deleted'),
                     behavior: SnackBarBehavior.floating,
+                    backgroundColor: isOffline ? Colors.orange : Colors.green,
                   ),
                 );
               }

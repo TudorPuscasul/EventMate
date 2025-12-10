@@ -1,3 +1,9 @@
+enum SyncStatus {
+  synced,
+  pending,
+  failed,
+}
+
 class EventModel {
   final String id;
   final String title;
@@ -8,6 +14,7 @@ class EventModel {
   final String creatorName;
   final List<String> invitedUserIds;
   final DateTime createdAt;
+  final SyncStatus syncStatus;
 
   EventModel({
     required this.id,
@@ -19,6 +26,7 @@ class EventModel {
     required this.creatorName,
     required this.invitedUserIds,
     required this.createdAt,
+    this.syncStatus = SyncStatus.synced,
   });
 
   bool get isPast => dateTime.isBefore(DateTime.now());
@@ -91,6 +99,7 @@ class EventModel {
     String? creatorName,
     List<String>? invitedUserIds,
     DateTime? createdAt,
+    SyncStatus? syncStatus,
   }) {
     return EventModel(
       id: id ?? this.id,
@@ -102,6 +111,7 @@ class EventModel {
       creatorName: creatorName ?? this.creatorName,
       invitedUserIds: invitedUserIds ?? this.invitedUserIds,
       createdAt: createdAt ?? this.createdAt,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 }

@@ -40,5 +40,47 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyAPQkiM9NtT9UiCLhKf58mTwrId7MZ7VJs',
+    appId: '1:199722517904:web:7086536586138960ca1f15',
+    messagingSenderId: '199722517904',
+    projectId: 'eventmate-e729a',
+    authDomain: 'eventmate-e729a.firebaseapp.com',
+    storageBucket: 'eventmate-e729a.firebasestorage.app',
+  );
 
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyARkq1CrQxV80I2BvzXHzFpeC3ZZngsqoA',
+    appId: '1:199722517904:android:4508da270da4a719ca1f15',
+    messagingSenderId: '199722517904',
+    projectId: 'eventmate-e729a',
+    storageBucket: 'eventmate-e729a.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyDM_bXvCPkWQYKnR2mEPpG460zABFD-F8w',
+    appId: '1:199722517904:ios:61b22d2963f54cc1ca1f15',
+    messagingSenderId: '199722517904',
+    projectId: 'eventmate-e729a',
+    storageBucket: 'eventmate-e729a.firebasestorage.app',
+    iosBundleId: 'com.example.eventmate',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyDM_bXvCPkWQYKnR2mEPpG460zABFD-F8w',
+    appId: '1:199722517904:ios:61b22d2963f54cc1ca1f15',
+    messagingSenderId: '199722517904',
+    projectId: 'eventmate-e729a',
+    storageBucket: 'eventmate-e729a.firebasestorage.app',
+    iosBundleId: 'com.example.eventmate',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAPQkiM9NtT9UiCLhKf58mTwrId7MZ7VJs',
+    appId: '1:199722517904:web:46b1a5b1b7ad0cd8ca1f15',
+    messagingSenderId: '199722517904',
+    projectId: 'eventmate-e729a',
+    authDomain: 'eventmate-e729a.firebaseapp.com',
+    storageBucket: 'eventmate-e729a.firebasestorage.app',
+  );
 }
