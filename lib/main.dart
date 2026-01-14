@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'firebase_options.dart';
 import 'screens/auth/auth_wrapper.dart';
-import 'services/auth_service.dart';
+import 'bloc/connectivity/connectivity.dart';
+import 'bloc/auth/auth.dart';
+import 'bloc/sync/sync.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
   await SystemChrome.setPreferredOrientations([
@@ -38,9 +45,11 @@ class EventMateApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
+    return MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
+        BlocProvider(create: (_) => ConnectivityCubit()),
+        BlocProvider(create: (_) => AuthBloc()),
+        BlocProvider(create: (_) => SyncCubit()),
       ],
       child: MaterialApp(
         title: 'EventMate',

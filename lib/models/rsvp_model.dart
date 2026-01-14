@@ -1,3 +1,5 @@
+import 'event_model.dart';
+
 enum RsvpStatus {
   attending,
   declined,
@@ -13,6 +15,7 @@ class RsvpModel {
   final String userEmail;
   final RsvpStatus status;
   final DateTime updatedAt;
+  final SyncStatus syncStatus;
 
   RsvpModel({
     required this.id,
@@ -22,6 +25,7 @@ class RsvpModel {
     required this.userEmail,
     required this.status,
     required this.updatedAt,
+    this.syncStatus = SyncStatus.synced,
   });
 
   String get statusText {
@@ -73,6 +77,7 @@ class RsvpModel {
     String? userEmail,
     RsvpStatus? status,
     DateTime? updatedAt,
+    SyncStatus? syncStatus,
   }) {
     return RsvpModel(
       id: id ?? this.id,
@@ -82,6 +87,7 @@ class RsvpModel {
       userEmail: userEmail ?? this.userEmail,
       status: status ?? this.status,
       updatedAt: updatedAt ?? this.updatedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 }

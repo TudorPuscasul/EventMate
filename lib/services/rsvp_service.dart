@@ -10,28 +10,25 @@ class RsvpService {
   String? get currentUserName => _auth.currentUser?.displayName;
   String? get currentUserEmail => _auth.currentUser?.email;
 
-  // Invite a user to an event by email
-  Future<String?> inviteUserByEmail({
+  Future<Map<String, dynamic>> inviteUserByEmail({
     required String eventId,
     required String email,
+    required bool isOnline,
   }) async {
     try {
-      // Check if email is valid
       if (email.isEmpty) {
-        return 'Please enter an email address';
+        return {'error': 'Please enter an email address', 'isOffline': false};
       }
 
-      // Get event document
       final eventDoc = await _firestore.collection('events').doc(eventId).get();
       if (!eventDoc.exists) {
-        return 'Event not found';
+        return {'error': 'Event not found', 'isOffline': false};
       }
 
-      // Add email to invitedUserIds (we'll use email as identifier for simplicity)
       final invitedUserIds = List<String>.from(eventDoc.data()?['invitedUserIds'] ?? []);
 
       if (invitedUserIds.contains(email)) {
-        return 'User already invited';
+        return {'error': 'User already invited', 'isOffline': false};
       }
 
       invitedUserIds.add(email);
@@ -39,23 +36,36 @@ class RsvpService {
         'invitedUserIds': invitedUserIds,
       });
 
-      // Create an RSVP record with pending status
       await _firestore.collection('rsvps').add({
         'eventId': eventId,
         'userEmail': email,
-        'userId': email, // Use email as ID until they sign up
-        'userName': email.split('@').first, // Use email prefix as name
+        'userId': email,
+        'userName': email.split('@').first,
         'status': RsvpStatus.pending.name,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      return null; // Success
+      return {
+        'error': null,
+        'message': isOnline
+            ? 'Invitation sent to $email'
+            : 'Invitation saved locally, will sync when online',
+        'isOffline': !isOnline
+      };
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable' || e.message?.contains('network') == true) {
+        return {
+          'error': null,
+          'message': 'Invitation saved locally, will sync when online',
+          'isOffline': true
+        };
+      }
+      return {'error': 'Failed to invite user: ${e.message}', 'isOffline': false};
     } catch (e) {
-      return 'Failed to invite user: $e';
+      return {'error': 'Failed to invite user: $e', 'isOffline': false};
     }
   }
 
-  // Get RSVPs for an event
   Stream<List<RsvpModel>> getRsvpsForEvent(String eventId) {
     return _firestore
         .collection('rsvps')
@@ -66,7 +76,6 @@ class RsvpService {
             .toList());
   }
 
-  // Get current user's RSVP for an event
   Future<RsvpModel?> getUserRsvpForEvent(String eventId) async {
     if (currentUserEmail == null) return null;
 
@@ -86,17 +95,16 @@ class RsvpService {
     }
   }
 
-  // Update RSVP status
-  Future<String?> updateRsvpStatus({
+  Future<Map<String, dynamic>> updateRsvpStatus({
     required String eventId,
     required RsvpStatus status,
+    required bool isOnline,
   }) async {
     if (currentUserEmail == null) {
-      return 'User not logged in';
+      return {'error': 'User not logged in', 'isOffline': false};
     }
 
     try {
-      // Find existing RSVP
       final snapshot = await _firestore
           .collection('rsvps')
           .where('eventId', isEqualTo: eventId)
@@ -104,7 +112,6 @@ class RsvpService {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        // Update existing RSVP
         await snapshot.docs.first.reference.update({
           'status': status.name,
           'userId': currentUserId,
@@ -112,7 +119,6 @@ class RsvpService {
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
-        // Create new RSVP (shouldn't happen normally)
         await _firestore.collection('rsvps').add({
           'eventId': eventId,
           'userEmail': currentUserEmail,
@@ -123,13 +129,27 @@ class RsvpService {
         });
       }
 
-      return null; // Success
+      return {
+        'error': null,
+        'message': isOnline
+            ? 'RSVP updated to ${status.name}'
+            : 'RSVP saved locally, will sync when online',
+        'isOffline': !isOnline
+      };
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable' || e.message?.contains('network') == true) {
+        return {
+          'error': null,
+          'message': 'RSVP saved locally, will sync when online',
+          'isOffline': true
+        };
+      }
+      return {'error': 'Failed to update RSVP: ${e.message}', 'isOffline': false};
     } catch (e) {
-      return 'Failed to update RSVP: $e';
+      return {'error': 'Failed to update RSVP: $e', 'isOffline': false};
     }
   }
 
-  // Get RSVP counts for an event
   Future<Map<String, int>> getRsvpCounts(String eventId) async {
     try {
       final snapshot = await _firestore

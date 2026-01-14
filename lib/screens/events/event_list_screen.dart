@@ -91,7 +91,9 @@ class _EventListScreenState extends State<EventListScreen> {
                   onRefresh: () async {
                     // Simulate refresh
                     await Future.delayed(const Duration(seconds: 1));
-                    setState(() {});
+                    if (mounted) {
+                      setState(() {});
+                    }
                   },
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 8),

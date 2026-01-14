@@ -4,6 +4,7 @@ import '../models/event_model.dart';
 import '../models/rsvp_model.dart';
 import '../services/rsvp_service.dart';
 import 'rsvp_badge.dart';
+import 'sync_status_widget.dart';
 
 class EventCard extends StatefulWidget {
   final EventModel event;
@@ -103,25 +104,36 @@ class _EventCardState extends State<EventCard> {
                       ],
                     ),
                   ),
-                  if (widget.event.isPast)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      SyncStatusWidget(
+                        status: widget.event.syncStatus,
+                        isSmall: true,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'Past',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w600,
+                      if (widget.event.isPast) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'Past',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
