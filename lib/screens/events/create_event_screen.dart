@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../widgets/custom_button.dart';
 import '../../utils/constants.dart';
 import '../../services/event_service.dart';
-import '../../services/connectivity_service.dart';
+import '../../bloc/connectivity/connectivity.dart';
 
 class CreateEventScreen extends StatefulWidget {
   const CreateEventScreen({super.key});
@@ -115,8 +115,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
     // Create event in Firestore
     final eventService = EventService();
-    final connectivityService = Provider.of<ConnectivityService>(context, listen: false);
-    final isOnline = connectivityService.isOnline;
+    // BLoC: Access cubit state via context.read() for one-time access
+    final isOnline = context.read<ConnectivityCubit>().state.isOnline;
 
     final result = await eventService.createEvent(
       title: _titleController.text.trim(),

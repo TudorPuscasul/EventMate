@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../events/event_list_screen.dart';
 import '../events/create_event_screen.dart';
-import 'package:provider/provider.dart';
-import '../../services/auth_service.dart';
 import '../../services/event_service.dart';
-import '../../services/connectivity_service.dart';
 import '../../services/profile_cache_service.dart';
-import '../../services/sync_manager.dart';
+import '../../bloc/connectivity/connectivity.dart';
+import '../../bloc/auth/auth.dart';
+import '../../bloc/sync/sync.dart';
 import '../../models/event_model.dart';
 import '../../widgets/offline_banner.dart';
 
@@ -27,10 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(_currentIndex == 0 ? 'My Events' : 'Invitations'),
         actions: [
-          Consumer<SyncManager>(
-            builder: (context, syncManager, child) {
+          BlocBuilder<SyncCubit, SyncState>(
+            builder: (context, syncState) {
               return IconButton(
-                icon: syncManager.isSyncing
+                icon: syncState.isSyncing
                     ? const SizedBox(
                         width: 24,
                         height: 24,
@@ -40,13 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       )
                     : const Icon(Icons.refresh),
-                onPressed: syncManager.isSyncing
+                onPressed: syncState.isSyncing
                     ? null
                     : () async {
-                        await syncManager.triggerSync();
+                        await context.read<SyncCubit>().triggerSync();
                         if (mounted) setState(() {}); // Refresh streams
                       },
-                tooltip: syncManager.lastSyncText,
+                tooltip: syncState.lastSyncText,
               );
             },
           ),
@@ -144,11 +144,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showProfileDialog() async {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final connectivityService = Provider.of<ConnectivityService>(context, listen: false);
-    final isOnline = connectivityService.isOnline;
+    final authBloc = context.read<AuthBloc>();
+    final isOnline = context.read<ConnectivityCubit>().state.isOnline;
 
-    final user = authService.currentUser;
+    final user = authBloc.currentUser;
     String userName = user?.displayName ?? 'User';
     String userEmail = user?.email ?? '';
 
@@ -165,14 +164,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Row(
           children: [
             const Text('Profile'),
             const Spacer(),
             if (!isOnline)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.orange,
                   borderRadius: BorderRadius.circular(12),
@@ -201,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: Theme.of(context).primaryColor,
+              backgroundColor: Theme.of(dialogContext).primaryColor,
               child: Text(
                 userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
                 style: const TextStyle(
@@ -230,13 +230,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              title:
+                  const Text('Logout', style: TextStyle(color: Colors.red)),
               contentPadding: EdgeInsets.zero,
               enabled: isOnline,
               onTap: isOnline
-                  ? () async {
-                      Navigator.pop(context); // Close dialog
-                      await authService.signOut();
+                  ? () {
+                      Navigator.pop(dialogContext); // Close dialog
+                      context.read<AuthBloc>().add(const AuthSignOutRequested());
                       // Navigation handled by AuthWrapper
                     }
                   : null,

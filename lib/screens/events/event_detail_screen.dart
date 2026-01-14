@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/event_model.dart';
 import '../../models/rsvp_model.dart';
 import '../../services/rsvp_service.dart';
 import '../../services/event_service.dart';
-import '../../services/connectivity_service.dart';
+import '../../bloc/connectivity/connectivity.dart';
 import '../../widgets/rsvp_badge.dart';
 import '../../widgets/sync_status_widget.dart';
 import '../../theme/app_theme.dart';
@@ -64,8 +64,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _updateRsvpStatus(RsvpStatus newStatus) async {
-    final connectivityService = Provider.of<ConnectivityService>(context, listen: false);
-    final isOnline = connectivityService.isOnline;
+    // BLoC: Access cubit state via context.read() for one-time access
+    final isOnline = context.read<ConnectivityCubit>().state.isOnline;
 
     final result = await _rsvpService.updateRsvpStatus(
       eventId: widget.event.id,
@@ -508,8 +508,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               if (email.isEmpty) return;
 
               final scaffoldMessenger = ScaffoldMessenger.of(context);
-              final connectivityService = Provider.of<ConnectivityService>(context, listen: false);
-              final isOnline = connectivityService.isOnline;
+              // BLoC: Access cubit state via context.read()
+              final isOnline = context.read<ConnectivityCubit>().state.isOnline;
               Navigator.pop(context);
 
               final result = await _rsvpService.inviteUserByEmail(
@@ -573,8 +573,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
           TextButton(
             onPressed: () async {
-              final connectivityService = Provider.of<ConnectivityService>(context, listen: false);
-              final isOnline = connectivityService.isOnline;
+              // BLoC: Access cubit state via context.read()
+              final isOnline = context.read<ConnectivityCubit>().state.isOnline;
               final scaffoldMessenger = ScaffoldMessenger.of(context);
               final navigator = Navigator.of(context);
 
